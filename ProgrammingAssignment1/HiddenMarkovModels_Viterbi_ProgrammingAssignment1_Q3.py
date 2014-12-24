@@ -5,6 +5,9 @@ import re
 O_tag = 'O'
 I_Gene_tag = 'I-GENE'
 _RARE_ = '_RARE_'
+_HASNUMBERS_ = '_HASNUMBERS_'
+_ALLCAPITALS_ = '_ALLCAPITALS_'
+_LASTCAPITAL_ = '_LASTCAPITAL_'
 
 exv_O_dict = dict()
 exv_I_Gene_dict = dict()
@@ -46,6 +49,66 @@ def NormalizeData(input, output, inputcnts):
             train_norm.write("%s\n" %(word))
 
     train_norm.close()
+
+def NormalizeData_Informational(input, output, inputcnts):
+    train_norm = open(output, "w")
+    train = open(input, "r")
+    train_counts = open(inputcnts, "r")
+    cnt_dict = dict()
+
+    #column indexes in inputcnts
+    wordcount_idx = 0
+    tag_idx = 2
+    word_idx = 3
+
+    #Read the records from gene.counts file
+    for row in train_counts:
+        cols = row.split()
+        if cols[1] == 'WORDTAG':
+            if cols[word_idx] in cnt_dict:
+                cnt_dict[cols[word_idx]] += int(cols[wordcount_idx])
+            else:
+                cnt_dict[cols[word_idx]] = int(cols[wordcount_idx])
+
+    for row in train:
+        cols = row.split()
+        if len(cols) == 0:
+            train_norm.write('\n')
+            continue
+        
+        word = cols[0]
+        if word not in cnt_dict or cnt_dict[word] < 5:
+            if hasNumbers(word):
+                word = _HASNUMBERS_
+            elif allCaps(word):
+                word = _ALLCAPITALS_
+            elif lastCaps(word):
+                word = _LASTCAPITAL_
+            else:
+                word = _RARE_
+
+        if len(cols) > 1:
+            train_norm.write("%s %s\n" %(word, cols[1]))
+        else:
+            train_norm.write("%s\n" %(word))
+
+    train_norm.close()
+
+def RegexMatches(inputString, regex):
+    if re.search(regex, inputString) is not None:
+        return True
+    else:
+        return False
+
+def hasNumbers(inputString):
+    return RegexMatches(inputString, r".*[0-9]+.*")
+
+def allCaps(inputString):
+    return RegexMatches(inputString, r'^[A-Z]+$')
+
+def lastCaps(inputString):
+    lastchar = inputString[-1]
+    return allCaps(lastchar)
 
 def Build_exv_viterbi_unigram(input):
     train_counts = open(input, "r")
@@ -253,36 +316,37 @@ def TestTrigramModel_Viterbi(input, input_norm, output):
     dev_trigram_out.close()
 
 train = "gene.train"
-train_norm = "gene.train.norm"
-train_norm_counts = "gene.train.counts.norm"
+train_norm = "gene.train.informational.norm"
+train_norm_counts = "gene.train.counts.informational.norm"
 
 #Manually load "train_counts" by running command - python count_freqs.py gene.train > gene.counts
 train_counts = "gene.counts"
 
-NormalizeData(train, train_norm, train_counts)
-#Manually load "gene.train.counts.norm" by running command - python count_freqs.py gene.train.norm > gene.train.counts.norm
+NormalizeData_Informational(train, train_norm, train_counts)
+#Manually load "gene.train.counts.informational.norm" by running command - python count_freqs.py gene.train.informational.norm > gene.train.counts.informational.norm
 
 Build_exv_viterbi_unigram(train_norm_counts)
 Build_exv_viterbi_trigram(train_norm_counts)
 
 ## Sample sentence for debugging purposes
-#NormalizeData("sample.dev", "sample.dev.norm", train_counts)
+#NormalizeData_Informational("sample.dev", "sample.dev.norm", train_counts)
 #TestTrigramModel_Viterbi("sample.dev", "sample.dev.norm", "sample.dev.out")
 
 dev = "gene.dev"
-dev_norm = "gene.dev.norm"
-NormalizeData(dev, dev_norm, train_counts)
-dev_unigram_output = "gene_dev.p1.out"
+dev_norm = "gene.dev.informational.norm"
+NormalizeData_Informational(dev, dev_norm, train_counts)
+dev_unigram_output = "gene_dev.p1.informational.out"
 
 #TestUnigramModel(dev, dev_norm, dev_unigram_output)
 
-dev_trigram_output = "gene_trigram_dev.out"
+dev_trigram_output = "gene_trigram_dev.informational.out"
 TestTrigramModel_Viterbi(dev, dev_norm, dev_trigram_output)
-# After loading dev_trigram_output, evaluate F score by running command - python eval_gene_tagger.py gene.key gene_trigram_dev.out
+# After loading dev_trigram_output, evaluate F score by running command - python eval_gene_tagger.py gene.key gene_trigram_dev.informational.out
 # Below is expected output of F score for dev_trigram_output
+#Found 415 GENEs. Expected 642 GENEs; Correct: 222
 #         precision      recall          F1-Score
-#GENE:    0.541555       0.314642        0.398030
+#GENE:    0.534940       0.345794        0.420057
 
-#test = "gene.test"
-#test_unigram_output = "gene_test.p1.out"
-#TestUnigramModel(test, test_unigram_output)
+# test = "gene.test"
+# test_unigram_output = "gene_test.p1.out"
+# TestUnigramModel(test, test_unigram_output)

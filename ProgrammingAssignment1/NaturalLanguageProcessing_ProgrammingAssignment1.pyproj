@@ -6,7 +6,7 @@
     <ProjectGuid>1daac72d-09e3-486f-8f44-5159c2455316</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>HiddenMarkovModels_Viterbi_ProgrammingAssignment1_Q1-2.py</StartupFile>
+    <StartupFile>HiddenMarkovModels_Viterbi_ProgrammingAssignment1_Q3.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -27,6 +27,7 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="HiddenMarkovModels_Viterbi_ProgrammingAssignment1_Q3.py" />
     <Compile Include="HiddenMarkovModels_Viterbi_ProgrammingAssignment1_Q1-2.py" />
   </ItemGroup>
   <Import Condition="Exists($(PtvsTargetsFile))" Project="$(PtvsTargetsFile)" />
