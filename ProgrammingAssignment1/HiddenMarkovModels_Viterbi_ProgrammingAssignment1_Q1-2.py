@@ -184,7 +184,7 @@ def TestTrigramModel_Viterbi(input, input_norm, output):
                 for u in validtags:
                     currVertibi = Viterbi_PI[-1][appnd2(u, v)] * q_trigram[appnd3(u, v, 'STOP')]
                     if currVertibi >= maxVertibi_PI_For_u_v:
-                        maxVertibi_PI_For_u_v = currVertibi
+                        maxVertibi_PI_For_u_v = currViterbi
                         maxu = u
                         maxv = v
             
@@ -237,16 +237,16 @@ def TestTrigramModel_Viterbi(input, input_norm, output):
             for v in validtags:
                 for u in validtags:
                     maxw = ''
-                    maxVertibi_PI_For_w = 0.0
-                    currVertibi = 0.0
+                    maxViterbi_PI_For_w = 0.0
+                    currViterbi = 0.0
 
                     for w in validtags:
-                         currVertibi = Viterbi_PI[idx-1][appnd2(w, u)] * q_trigram[appnd3(w, u, v)] * exv_dict[v]
-                         if currVertibi >= maxVertibi_PI_For_w:
-                             maxVertibi_PI_For_w = currVertibi
+                         currViterbi = Viterbi_PI[idx-1][appnd2(w, u)] * q_trigram[appnd3(w, u, v)] * exv_dict[v]
+                         if currViterbi >= maxViterbi_PI_For_w:
+                             maxViterbi_PI_For_w = currViterbi
                              maxw = w
 
-                    Viterbi_PI[idx][appnd2(u, v)] = maxVertibi_PI_For_w
+                    Viterbi_PI[idx][appnd2(u, v)] = maxViterbi_PI_For_w
                     wseq.append(maxw)
                     bpk[idx][appnd2(u, v)] = maxw
 
