@@ -99,10 +99,16 @@ def Build_qparams(input):
 
     q_param_file = open("q_param", "w")
     for xyzrule, cnt in xyzrule_dict.iteritems():
-        xrule = xyzrule.split()[0]
+        rules = xyzrule.split()
+        xrule = rules[0]
+        yrule = rules[1]
+        zrule = rules[2]
+        yzrule = "{0} {1}".format(yrule, zrule)
         xcnt = xrule_dict[xrule]
-        q_param[xyzrule] = (cnt * 1.0) / xcnt
-        q_param_file.write("{0} {1}\n".format(xyzrule, q_param[xyzrule]))
+        if (xrule not in q_param):
+            q_param[xrule] = dict()
+        q_param[xrule][yzrule] = (cnt * 1.0) / xcnt
+        q_param_file.write("{0} {1}\n".format(xyzrule, q_param[xrule][yzrule]))
 
     for xterminal, cnt in xterminal_dict.iteritems():
         cols = xterminal.split()
@@ -126,50 +132,100 @@ def Build_CKYParseTree(input, input_norm, output):
 
     #for each line in file
     for lineidx, line in enumerate(dev_norm):
-        words = line.split()
+        words_norm = line.split()
+        words = dev[lineidx].split()
         cky_pi = dict()
 
         #initialize cky_pi['1 1']['N'],  cky_pi['1 1']['VP'], etc..
-        for (idx, word) in enumerate(words):
+        for (idx, word) in enumerate(words_norm):
             key = appnd2(idx+1, idx+1)
 
             if key not in cky_pi:
                 cky_pi[key] = dict()
 
             for rule, q in q_terminal_param[word].iteritems():
-                cky_pi[key][rule] = q
+                cky_pi[key][rule] = dict()
+                cky_pi[key][rule]['prob'] = q
+                cky_pi[key][rule]['terminalword'] = words[idx]
+                cky_pi[key][rule]['terminalrule'] = rule
 
-        for l in range1(1, len(words)-1):
-            for i in range1(1, len(words)-l):
-                j = i + l
-                key = appnd2(i, j)
+        for wordidx in range1(1, len(words_norm)-1):
+            for I in range1(1, len(words_norm)-wordidx):
+                J = I + wordidx
+                key = appnd2(I, J)
 
                 if key not in cky_pi:
                     cky_pi[key] = dict()
 
-                curr_cky_pi = 0.0
-                max_cky_pi = 0.0
-                maxrule = ''
-                maxs = 0
+                for xrule, yzrules in q_param.iteritems():
+                    curr_cky_pi = 0.0
+                    max_cky_pi = 0.0
+                    maxrule = ''
+                    maxs = 0
 
-                for xyzrule, ruleprob in q_param.iteritems():
-                    rule = xyzrule.split()
-                    xrule = rule[0]
-                    yrule = rule[1]
-                    zrule = rule[2]
+                    for yzrule, ruleprob in yzrules.iteritems():
+                        rule = yzrule.split()
+                        yrule = rule[0]
+                        zrule = rule[1]
 
-                    for s in range1(i, j-1):
+                        for s in range1(I, J-1):
 
-                        if yrule in cky_pi[appnd2(i, s)] and zrule in cky_pi[appnd2(s+1, j)]:
-                            curr_cky_pi = ruleprob * cky_pi[appnd2(i, s)][yrule] * cky_pi[appnd2(s+1, j)][zrule]
+                            if yrule in cky_pi[appnd2(I, s)] and zrule in cky_pi[appnd2(s+1, J)]:
+                                curr_cky_pi = ruleprob * cky_pi[appnd2(I, s)][yrule]['prob'] * cky_pi[appnd2(s+1, J)][zrule]['prob']
 
-                            if (curr_cky_pi >= max_cky_pi):
-                                max_cky_pi = curr_cky_pi
-                                maxrule = xyzrule
-                                maxs = s
+                                if (curr_cky_pi >= max_cky_pi):
+                                    max_cky_pi = curr_cky_pi
+                                    maxrule = yzrule
+                                    maxs = s
 
-                    cky_pi[key][xrule] = max_cky_pi
+                    if max_cky_pi > 0.0:
+                        cky_pi[key][xrule] = dict()
+                        cky_pi[key][xrule]['prob'] = max_cky_pi
+                        cky_pi[key][xrule]['yzrule'] = maxrule
+                        cky_pi[key][xrule]['s'] = maxs
 
+        parsetree = GetBestParseTree(cky_pi, len(words))
+        dev_p1_out.write("{0}\n".format(parsetree))
+        dev_p1_out.flush()
+    dev_p1_out.close()
+
+def GetBestParseTree(cky_pi, sentencelength):
+    key = appnd2(1, sentencelength)
+    max_xrule = ''
+    maxprob = 0.0
+    currprob = 0.0
+
+    #Assumes multi-word sentences
+    for xrule, mapping in cky_pi[key].iteritems():
+        currprob = mapping['prob']
+        if currprob > maxprob:
+            maxprob = currprob
+            max_xrule = xrule
+
+    return '["{0}", {1}]'.format(max_xrule, GetParseTreeFragment(cky_pi, 1, sentencelength, max_xrule))
+            #return GetParseTreeFragment(cky_pi, 1, sentencelength, max_xrule)
+
+def GetParseTreeFragment(cky_pi, slicestart, sliceend, xrule):
+    rulefragment = cky_pi[appnd2(slicestart, sliceend)][xrule]
+    if 'terminalrule' in rulefragment:
+        return '["{0}", "{1}"]'.format(rulefragment['terminalrule'], rulefragment['terminalword'])
+    else:
+        yzrule = rulefragment['yzrule'].split()
+        yrule = yzrule[0]
+        zrule = yzrule[1]
+        s = int(rulefragment['s'])
+        
+        if slicestart == s:
+            yfragment = GetParseTreeFragment(cky_pi, slicestart, s, yrule)
+        else:
+            yfragment = '["{0}", {1}]'.format(yrule, GetParseTreeFragment(cky_pi, slicestart, s, yrule))
+
+        if s+1 == sliceend:
+            zfragment = GetParseTreeFragment(cky_pi, s+1, sliceend, zrule)
+        else:
+            zfragment = '["{0}", {1}]'.format(zrule, GetParseTreeFragment(cky_pi, s+1, sliceend, zrule))
+        
+        return '{1}, {2}'.format(xrule, yfragment, zfragment)
 
 range1 = lambda start, end: range(start, end+1)
 train = "parse_train.dat"
@@ -182,6 +238,13 @@ NormalizeData(train, train_norm)
 
 #Manually load "cfg.counts.norm" by running command - python count_cfg_freq.py parse_train.dat.norm > cfg.counts.norm
 Build_qparams(train_norm_counts)
+
+dev_sample = "parse_sample.dat"
+dev_sample_norm = "parse_sample.dat.norm"
+dev_sample_out = "parse_sample.out"
+NormalizeDevData(dev_sample, dev_sample_norm)
+
+Build_CKYParseTree(dev_sample, dev_sample_norm, dev_sample_out)
 
 dev = "parse_dev.dat"
 dev_norm = "parse_dev.dat.norm"
