@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>6fe2cf3f-712f-4e2f-8dd0-41c74beaa9a7</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>ParseTree_CKY_algo.py</StartupFile>
+    <StartupFile>IBM_Model1.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -26,7 +26,7 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ParseTree_CKY_algo.py">
+    <Compile Include="IBM_Model1.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

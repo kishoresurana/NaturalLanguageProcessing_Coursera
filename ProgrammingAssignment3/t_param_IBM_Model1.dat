@@ -1,0 +1,50 @@
+(dp0
+S'mujer woman'
+p1
+F0.805436953136326
+sS'casa the'
+p2
+F0.07708571941388236
+sS'casa house'
+p3
+F0.805436953136326
+sS'la the'
+p4
+F0.12497846067238307
+sS'mujer the'
+p5
+F0.07708571941388236
+sS'la car'
+p6
+F0.5
+sS'coche __NULL__'
+p7
+F0.12497846067238307
+sS'la __NULL__'
+p8
+F0.12497846067238307
+sS'el woman'
+p9
+F0.194563046863674
+sS'el the'
+p10
+F0.5958716398274692
+sS'mujer __NULL__'
+p11
+F0.07708571941388236
+sS'el house'
+p12
+F0.194563046863674
+sS'el __NULL__'
+p13
+F0.5958716398274692
+sS'coche the'
+p14
+F0.12497846067238307
+sS'coche car'
+p15
+F0.5
+sS'casa __NULL__'
+p16
+F0.07708571941388236
+s.
